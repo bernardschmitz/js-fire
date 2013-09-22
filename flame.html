@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <script type="application/javascript">
+  
+	var canvas;
+	var paused = false;
+	var delay = 25;
+	var ctx;
+	
+	var cols = 320 / 5;
+	var rows = 240 / 5;
+	
+	var cw;
+	var ch;
+		
+	var pal;
+	var frame;
+	var curr = 0;
+	
+    function init() {
+      canvas = document.getElementById("canvas");
+      if (canvas.getContext) {		
+        ctx = canvas.getContext("2d");
+		
+		cw = canvas.width / cols;
+		ch = canvas.height / rows;
+
+		pal = new Array(256);
+		for(var i=0; i<16; i++) {
+			pal[i] = 'rgb(0,0,'+2*i+')';
+			pal[i+16] = 'rgb('+2*i+',0,'+(32-i*2)+')';
+		}
+		for(var i=0; i<32; i++) {
+			pal[32+i] = 'rgb('+Math.floor(16+240*i/32)+',0,0)';
+		}
+		for(var i=0; i<48; i++) {
+			pal[64+i] = 'rgb(255,'+Math.floor(85*i/16)+',0)';
+			pal[64+48+i] = 'rgb(255,255,'+Math.floor(85*i/16)+')';
+		}
+		for(var i=0; i<96; i++) {
+			pal[i+64+48+48] = 'rgb(255,255,255)';
+		}
+		
+		//for(var i=0; i<256; i++) {
+		//	console.info(i+' '+pal[i]);
+		//}
+		
+		
+		frame = new Array(2);
+		for(var f=0; f<2; f++) {
+			frame[f] = new Array(cols);
+			for(var x=0; x<cols; x++) {
+				frame[f][x] = new Array(rows);
+				for(var y=0; y<rows; y++) {
+					frame[f][x][y] = 0;
+				}
+			}
+		}
+		
+		loop();
+      }	  
+    }
+	
+	
+	function logic() {
+
+		var f = curr;
+		var nf = (curr+1) % 2;
+
+		for(var x=1; x<cols-1; x++) {
+			var y = rows-1;
+			frame[f][x][y-1] = Math.floor(Math.random() * 15 + 64);
+			frame[f][x][y] = Math.floor( Math.random() * 15 + 64);
+			frame[f][x][y+1] = Math.floor( Math.random() * 15 + 128);
+		}		
+
+		var b = Math.floor(Math.random()*15+1);
+		for(var k=0; k<b; k++) {
+			var x = Math.floor(Math.random()*(cols-2) +1);
+			var y = rows-2;
+			frame[f][x-1][y-1] = 255;
+			frame[f][x+0][y-1] = 255;
+			frame[f][x+1][y-1] = 255;
+			frame[f][x-1][y-0] = 255;
+			frame[f][x+0][y-0] = 255;
+			frame[f][x+1][y-0] = 255;
+			frame[f][x-1][y+1] = 255;
+			frame[f][x+0][y+1] = 255;
+			frame[f][x+1][y+1] = 255;
+		}
+		
+		for(var x=1; x<cols-1; x++) {
+		
+			for(var y=1; y<rows-1; y++) {
+			
+				var a = 0;
+				//a += frame[f][x+0][y-0];
+				a += frame[f][x+0][y-1];
+				a += frame[f][x-1][y-0];				
+				a += frame[f][x+1][y-0];
+				a += frame[f][x+0][y+1];
+
+				a += frame[f][x+1][y-1];
+				a += frame[f][x-1][y+1];				
+				a += frame[f][x-1][y-1];				
+				a += frame[f][x+1][y+1];
+				
+				a = a >> 3;
+		
+				if(a > 0) {
+					a--;
+				}
+				
+				var k = Math.floor(Math.random() * 3 + 1);
+				if(a > k) {
+					a = a - k;
+				}
+
+
+
+				frame[nf][x][y-1] = Math.floor(a);
+			}
+		}
+		
+
+	
+		curr = nf;
+		
+	}
+	
+	
+	function render() {
+
+		for(var x=0; x<cols; x++) {
+			for(var y=0; y<rows; y++) {
+				ctx.fillStyle = pal[frame[curr][x][y]];
+				ctx.fillRect(x*cw, y*ch , cw, ch);
+			}
+		}
+		
+		ctx.fillStyle = '#000';
+		ctx.fillRect(0, rows*ch-(ch*2), cols*cw, 2*ch);
+	
+	}
+	
+	
+	function loop() {
+		if (!paused) {
+			logic();
+			render();
+		}
+		setTimeout("loop()", delay);
+	}
+
+	function pause() {
+		paused = !paused;
+	}
+
+	
+  </script>
+ </head>
+ <body onload="init();" >
+   <canvas id="canvas" width="320" height="240"></canvas>
+ </body>
+</html>
+
